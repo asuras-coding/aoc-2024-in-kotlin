@@ -36,7 +36,7 @@ fun main() {
                 }
             }
         }
-        return antinodes.size
+        return antinodes.also { println(it) }.size
     }
 
     fun part2(input: List<String>): Int {
