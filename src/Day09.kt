@@ -42,7 +42,7 @@ fun main() {
     fun fillDiskSpaces(maxFileId: Int, disk: List<DiskPart>): List<DiskPart> {
         val currentDisk = disk.toMutableList()
         for (fileId in maxFileId downTo 0) {
-            val diskPart = currentDisk.find { it.fileId == fileId } ?: throw IllegalStateException("No disk part found for file id $fileId")
+            val diskPart = currentDisk.first { it.fileId == fileId }
             tryMove(diskPart, currentDisk)
         }
 
