@@ -26,66 +26,39 @@ fun main() {
         return calcChecksum(disk)
     }
 
-    fun moveDiskPart(diskPart: DiskPart, disk: List<DiskPart>): List<DiskPart> {
-        if (diskPart.fileSize == 0) return disk
-        val candidate = disk.find { it.emptySpace >= diskPart.fileSize } ?: return disk
-
-        val diskPartIndex = disk.indexOf(diskPart)
-        val candIndex = disk.indexOf(candidate)
-
-        val preIndex = diskPartIndex - 1
-        val preItem = disk[preIndex]
-
-
-        val newCandidate = candidate.copy(emptySpace = 0)
-        val newDiskPart = diskPart.copy(emptySpace = candidate.emptySpace - diskPart.fileSize)
-        val newPreItem = preItem.copy(emptySpace = preItem.emptySpace + diskPart.fileSize + diskPart.emptySpace)
-
-
-        val newDisk = disk.toMutableList()
-        newDisk.removeAt(diskPartIndex)
-        newDisk.removeAt(preIndex)
-        newDisk.add(preIndex, newPreItem)
-        newDisk.removeAt(candIndex)
-        newDisk.add(candIndex, newCandidate)
-        newDisk.add(candIndex+1, newDiskPart)
-
-//        val newDisk =
-//            disk.subList(0, candIndex) +
-//                    newCandidate + newDiskPart +
-//                    disk.subList(candIndex + 1, preIndex) +
-//                    newPreItem +
-//                    disk.subList(diskPartIndex + 1, disk.size)
-        return newDisk
+    fun tryMove(partToMove: DiskPart, disk: MutableList<DiskPart>) {
+        val partToMoveIndex = disk.indexOf(partToMove)
+        val emptySpaceIndex = disk.subList(0, partToMoveIndex).indexOfFirst { it.emptySpace >= partToMove.fileSize }
+        if (emptySpaceIndex == -1) return
+        val itemBeforePartToMove = partToMoveIndex -1
+        disk[itemBeforePartToMove].emptySpace += partToMove.fileSize + partToMove.emptySpace
+        val itemWithEmptySpace = disk[emptySpaceIndex]
+        partToMove.emptySpace = itemWithEmptySpace.emptySpace - partToMove.fileSize
+        itemWithEmptySpace.emptySpace = 0
+        disk.removeAt(partToMoveIndex)
+        disk.add(emptySpaceIndex +1, partToMove)
     }
 
-    fun isMoveable(diskPart: DiskPart, disk: List<DiskPart>): Boolean {
-        return diskPart.fileSize > 0 && disk.subList(0, disk.indexOf(diskPart))
-            .any { it.emptySpace >= diskPart.fileSize }
-    }
-
-    fun fillDiskSpaces(disk: List<DiskPart>): List<DiskPart> {
-        var currentDisk = disk
-        for (fileId in disk.map { it.fileId }.reversed()) {
-            val diskPart = currentDisk.first { it.fileId == fileId }
-            if (isMoveable(diskPart, currentDisk)) {
-                currentDisk = moveDiskPart(diskPart, currentDisk)
-            }
+    fun fillDiskSpaces(maxFileId: Int, disk: List<DiskPart>): List<DiskPart> {
+        val currentDisk = disk.toMutableList()
+        for (fileId in maxFileId downTo 0) {
+            val diskPart = currentDisk.find { it.fileId == fileId } ?: throw IllegalStateException("No disk part found for file id $fileId")
+            tryMove(diskPart, currentDisk)
         }
 
         return currentDisk
     }
 
     fun part2(input: List<String>): Long {
-        var fileId = 0
+        var fileId = -1
         val disk: List<DiskPart> = input.first().windowed(2, 2, partialWindows = true) {
             if (it.length < 2) {
-                DiskPart(fileId++, it[0].digitToInt(), 0)
+                DiskPart(++fileId, it[0].digitToInt(), 0)
             } else {
-                DiskPart(fileId++, it[0].digitToInt(), it[1].digitToInt())
+                DiskPart(++fileId, it[0].digitToInt(), it[1].digitToInt())
             }
         }
-        val filledDisk = fillDiskSpaces(disk)
+        val filledDisk = fillDiskSpaces(fileId, disk)
 
         return calcChecksum(filledDisk.joinToString("") { it.print() }.toCharArray())
     }
@@ -100,6 +73,6 @@ fun main() {
     part2(input).println()
 }
 
-data class DiskPart(val fileId: Int, val fileSize: Int, val emptySpace: Int) {
-    fun print() = "${ '0' + fileId}".repeat(fileSize) + ".".repeat(emptySpace)
+data class DiskPart(val fileId: Int, val fileSize: Int, var emptySpace: Int) {
+    fun print() = "${'0' + fileId}".repeat(fileSize) + ".".repeat(emptySpace)
 }
