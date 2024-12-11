@@ -16,38 +16,43 @@ fun main() {
 
     fun getAdjacentNodes(value: Int, x: Int, y: Int, grid: Array<IntArray>): List<Node> {
         return listOfNotNull(
-            grid.getOrNull(y)?.getOrNull(x + 1)?.let { if (it == value + 1) Node(it, x + 1, y, getAdjacentNodes(it, x + 1, y, grid)) else null },
-            grid.getOrNull(y)?.getOrNull(x - 1)?.let { if (it == value + 1) Node(it, x - 1, y, getAdjacentNodes(it, x - 1, y, grid)) else null },
-            grid.getOrNull(y + 1)?.getOrNull(x)?.let { if (it == value + 1) Node(it, x, y + 1, getAdjacentNodes(it, x, y + 1, grid)) else null },
-            grid.getOrNull(y - 1)?.getOrNull(x)?.let { if (it == value + 1) Node(it, x, y - 1, getAdjacentNodes(it, x, y - 1, grid)) else null },
+            grid.getOrNull(y)?.getOrNull(x + 1)
+                ?.let { if (it == value + 1) Node(it, x + 1, y, getAdjacentNodes(it, x + 1, y, grid)) else null },
+            grid.getOrNull(y)?.getOrNull(x - 1)
+                ?.let { if (it == value + 1) Node(it, x - 1, y, getAdjacentNodes(it, x - 1, y, grid)) else null },
+            grid.getOrNull(y + 1)?.getOrNull(x)
+                ?.let { if (it == value + 1) Node(it, x, y + 1, getAdjacentNodes(it, x, y + 1, grid)) else null },
+            grid.getOrNull(y - 1)?.getOrNull(x)
+                ?.let { if (it == value + 1) Node(it, x, y - 1, getAdjacentNodes(it, x, y - 1, grid)) else null },
         )
     }
 
-    fun getHighpoints(node: Node): List<Node> {
+    fun getSummits(node: Node): List<Node> {
         if (node.value == 9) return listOf(node)
-        return node.adjacentNodes.flatMap { getHighpoints(it)}
+        return node.adjacentNodes.flatMap { getSummits(it) }
+    }
+
+    fun getTrailheads(grid: Array<IntArray>): List<Node> {
+        return buildList<Node> {
+            for (y in 0..grid.lastIndex) {
+                for (x in 0..grid[y].lastIndex) {
+                    if (grid[y][x] == 0) add(Node(0, x, y, getAdjacentNodes(0, x, y, grid)))
+                }
+            }
+        }
     }
 
     fun part1(input: List<String>): Int {
         val grid = input.to2DIntArray()
-        val tailheads = mutableListOf<Node>()
-        for (y in 0..grid.lastIndex) {
-            for (x in 0..grid[y].lastIndex) {
-                if (grid[y][x] == 0) tailheads.add(Node(0, x, y, getAdjacentNodes(0, x, y, grid)))
-            }
-        }
-        return tailheads.sumOf { getHighpoints(it).distinct().size }
+        val trailheads = getTrailheads(grid)
+        return trailheads.sumOf { getSummits(it).distinct().size }
     }
 
     fun part2(input: List<String>): Int {
         val grid = input.to2DIntArray()
-        val tailheads = mutableListOf<Node>()
-        for (y in 0..grid.lastIndex) {
-            for (x in 0..grid[y].lastIndex) {
-                if (grid[y][x] == 0) tailheads.add(Node(0, x, y, getAdjacentNodes(0, x, y, grid)))
-            }
-        }
-        return tailheads.sumOf { getHighpoints(it).size }
+        val trailheads = getTrailheads(grid)
+
+        return trailheads.sumOf { getSummits(it).size }
     }
 
     val testInput = readInput("Day10_test")
