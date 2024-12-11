@@ -19,7 +19,6 @@ fun main() {
         }
     }
 
-
     fun part1(input: List<String>): Int {
         var stones = input.first().split(" ").map { it.toLong() }
         repeat(25) {
